@@ -1,0 +1,104 @@
+#!/usr/bin/env groovy
+
+def build_ver_core
+def build_ver_vad
+def build_ver_bom
+def build_ver
+
+pipeline {
+    agent { node { label 'cxs-slave-master' } }
+    parameters {
+        string(name: 'MAJOR_VERSION_NUMBER', defaultValue:'@VERSION@', description: 'Major version number of release')
+        string(name: 'MEDIA_BOM_VERSION', defaultValue:'@VERSION@', description: 'Version of Media Bom, used to assembly Media standalone')
+        booleanParam(name: 'PUBLISH_TO_CXS_NEXUS', defaultValue:true, description: 'Publish produced artifacts to local CXS Nexus repository.')
+        booleanParam(name: 'PUBLISH_TO_SONATYPE', defaultValue:false, description: 'Publish produced artifacts to Maven Central repository')
+    }
+    stages {
+        stage("build-media-parent") {
+            steps {
+                script {
+                    def media_build_job = build(job: "media-parent",
+                        parameters:
+                        [string(name: 'MAJOR_VERSION_NUMBER', value: "${params.MAJOR_VERSION_NUMBER}"),
+                        booleanParam(name: 'PUBLISH_TO_CXS_NEXUS', value: true),
+                        booleanParam(name: 'PUBLISH_TO_SONATYPE', value: false)])
+                    def build_nbr = media_build_job.getNumber()    
+                    println "build nbr:" + "${build_nbr}"
+                    build_ver = "${MAJOR_VERSION_NUMBER}" + "-" + "${build_nbr}"
+                    println "build version: ${build_ver}"
+                }
+            }
+        }
+        stage("build-media-core") {
+            steps {
+                script {
+                    println "build version from  parent:" + "${build_ver}"
+                    def media_build_job = build(job: "media-core",
+                        parameters:
+                        [string(name: 'MAJOR_VERSION_NUMBER', value: "${params.MAJOR_VERSION_NUMBER}"),
+                        string(name: 'MEDIA_BOM_VERSION', value: "${params.MEDIA_BOM_VERSION}"),
+                        booleanParam(name: 'UPDATE_PARENT', value: true),
+                        booleanParam(name: 'PUBLISH_TO_CXS_NEXUS', value: true),
+                        booleanParam(name: 'PUBLISH_TO_SONATYPE', value: false)])
+                    def build_nbr_core = media_build_job.getNumber()    
+                    println "build nbr:" + "${build_nbr_core}"
+                    build_ver_core = "${MAJOR_VERSION_NUMBER}" + "-" + "${build_nbr_core}"
+                    println "build version: ${build_ver_core}"
+                }
+            }
+        }
+        stage("build-media-plugin-vad-noise-threshold") {
+            steps {
+                script {
+                    def media_build_job = build(job: "media-plugin-vad-noise-threshold",
+                        parameters:
+                        [string(name: 'MAJOR_VERSION_NUMBER', value: "${params.MAJOR_VERSION_NUMBER}"),
+                        string(name: 'MEDIA_CORE_VERSION', value: "${build_ver_core}"),
+                        booleanParam(name: 'UPDATE_PARENT', value: true),
+                        booleanParam(name: 'PUBLISH_TO_CXS_NEXUS', value: true),
+                        booleanParam(name: 'PUBLISH_TO_SONATYPE', value: false)])
+                    def build_nbr_vad = media_build_job.getNumber()    
+                    println "build nbr:" + "${build_nbr_vad}"
+                    build_ver_vad = "${MAJOR_VERSION_NUMBER}" + "-" + "${build_nbr_vad}"
+                    println "build version: ${build_ver_vad}"
+                }
+            }
+        }
+        stage("build-media-bom") {
+            steps {
+                script {
+                    def media_build_job = build(job: "media-bom",
+                        parameters:
+                        [string(name: 'MAJOR_VERSION_NUMBER', value: "${params.MAJOR_VERSION_NUMBER}"),
+                        string(name: 'MEDIA_CORE_VERSION', value: "${build_ver_core}"),
+                        string(name: 'MEDIA_PLUGIN_VAD_VERSION', value: "${build_ver_vad}"),
+                        booleanParam(name: 'UPDATE_PARENT', value: true),
+                        booleanParam(name: 'PUBLISH_TO_CXS_NEXUS', value: true),
+                        booleanParam(name: 'PUBLISH_TO_SONATYPE', value: false)])
+                    def build_nbr_bom = media_build_job.getNumber()    
+                    println "build nbr:" + "${build_nbr_bom}"
+                    build_ver_bom = "${MAJOR_VERSION_NUMBER}" + "-" + "${build_nbr_bom}"
+                    println "build version: ${build_ver_bom}"
+                }
+            }
+        }
+        stage("build-media-server-standalone") {
+            steps {
+                script {
+                    def media_build_job = build(job: "media-server-standalone",
+                        parameters:
+                        [string(name: 'MAJOR_VERSION_NUMBER', value: "${params.MAJOR_VERSION_NUMBER}"),
+                        string(name: 'MEDIA_BOM_VERSION', value: "${build_ver_bom}"),
+                        string(name: 'BOM_REPLACER', value: "${build_ver_bom}"),
+                        booleanParam(name: 'UPDATE_PARENT', value: true),
+                        booleanParam(name: 'PUBLISH_TO_CXS_NEXUS', value: true),
+                        booleanParam(name: 'PUBLISH_TO_SONATYPE', value: false)])
+                    def build_nbr_serv = media_build_job.getNumber()    
+                    println "build nbr:" + "${build_nbr_serv}"
+                    def build_ver_serv = "${MAJOR_VERSION_NUMBER}" + "-" + "${build_nbr_serv}"
+                    println "build version: ${build_ver_serv}"
+                }
+            }
+        }
+    }
+}
