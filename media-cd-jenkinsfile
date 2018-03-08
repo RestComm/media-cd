@@ -8,8 +8,8 @@ def build_ver
 pipeline {
     agent { node { label 'cxs-slave-master' } }
     parameters {
-        string(name: 'MAJOR_VERSION_NUMBER', defaultValue:'@VERSION@', description: 'Major version number of release')
-        string(name: 'MEDIA_BOM_VERSION', defaultValue:'@VERSION@', description: 'Version of Media Bom, used to assembly Media standalone')
+        string(name: 'MAJOR_VERSION_NUMBER', defaultValue:'8.0.0', description: 'Major version number of release')
+        string(name: 'MEDIA_BOM_VERSION', defaultValue:'8.0.0', description: 'Version of Media Bom, used to assembly Media standalone')
         booleanParam(name: 'PUBLISH_TO_CXS_NEXUS', defaultValue:true, description: 'Publish produced artifacts to local CXS Nexus repository.')
         booleanParam(name: 'PUBLISH_TO_SONATYPE', defaultValue:false, description: 'Publish produced artifacts to Maven Central repository')
     }
