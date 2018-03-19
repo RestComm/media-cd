@@ -1,0 +1,27 @@
+#!/usr/bin/env groovy
+
+pipeline {
+    agent { node { label 'cxs-slave-master' } }
+    stages {
+        stage("build-media-parent-snapshot") {
+            steps {
+                build(job: "media-parent-snapshot")
+            }
+        }
+        stage("build-media-core-snapshot") {
+            steps {
+                build(job: "media-core-snapshot")
+            }
+        }
+        stage("build-media-plugins-snapshot") {
+            steps {
+	        build(job: "media-plugins-snapshot")
+            }
+        }
+        stage("build-media-server-standalone-snapshot") {
+            steps {
+	        build(job: "media-server-standalone-snapshot")
+            }
+        }
+    }
+}
