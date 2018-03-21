@@ -1,0 +1,110 @@
+#!/usr/bin/env groovy
+
+import groovy.json.JsonSlurper
+def repoBase = "https://github.com/RestComm/"
+def repos = []
+
+pipeline {
+    agent { node { label 'cxs-slave-master' } }
+    stages {
+        stage("get-media-plugin-repositories") {
+            steps {
+                script{
+                    def connection = new URL( "https://api.github.com/search/repositories?q=RestComm/media-plugin")
+                            .openConnection() as HttpURLConnection
+                    // set some headers
+                    connection.setRequestProperty( 'User-Agent', 'groovy-2.4.11' )
+                    connection.setRequestProperty( 'Accept', 'application/json' )
+
+                    def jsonText = connection.inputStream.text
+                    //println connection.responseCode + ": " + jsonText                    
+                    
+                    if ( connection.responseCode == 200 ) {
+                        def json = new JsonSlurper().parseText(jsonText)
+
+                        // show repositories
+                        println "Repositories:"
+                        json.items.each { i ->
+                            println " Name: ${i.name}"
+                            println " Id: ${i.id}"
+                            def repoUrl = repoBase + "${i.name}"
+                            println " Url: ${repoUrl}"
+                            repos << repoUrl
+                        }
+                    } else {
+                        println connection.responseCode + ": " + connection.inputStream.text
+                    }                    
+                }
+            }
+        }
+        stage("build-plugins") {
+            steps {
+                script {
+                    def builders = [:]
+                    for (x in repos) {
+                        def repo = x 
+                        builders[repo] = {
+                            node("cxs-slave-master") {
+                                configFileProvider(
+                                    [configFile(fileId: '37cb206e-6498-4d8a-9b3d-379cd0ccd99b',  targetLocation: 'settings.xml')]) {
+                            	    sh 'mkdir -p ~/.m2 && sed -i "s|@LOCAL_REPO_PATH@|$WORKSPACE/M2_REPO|g" $WORKSPACE/settings.xml && cp $WORKSPACE/settings.xml -f ~/.m2/settings.xml'
+                                }
+                                stage("media-plugin-scm") {
+                                    git branch: 'master',
+                                        credentialsId: 'CXSGithub',
+                                        url: "${repo}"                                    
+                                }
+                                stage ('Build') {
+                                    sh "mvn clean install -DskipTests=true"
+                                }
+                                stage ('Test') {
+                                    sh "mvn clean install -Dmaven.test.failure.ignore=true"
+                                }
+                                stage ('Deploy') {
+                                    sh "mvn clean install package deploy:deploy -Pattach-sources,generate-javadoc,maven-release -DskipTests=true -DskipNexusStagingDeployMojo=true -DaltDeploymentRepository=nexus::default::$CXS_NEXUS_SNAPSHOTS_URL"
+                                }
+                            }
+                        }
+                    }
+                    try {
+                        parallel builders
+                    }
+                    catch (error) {
+                        echo 'Some plugin build FAILS!'
+                    }
+                }    
+            }
+        }
+    }
+}                    
+
+/*            
+            parallel {
+                stage("iterate...") {
+                    agent { node { label 'cxs-slave-master' } }                        
+                    steps { 
+                        script {
+                            repos.collectEntries {repo -> [repo, {
+                                build(job: "media-plugin-placeholder-snapshot",
+                                                parameters:
+                                                [string(name: 'PLUGIN_REPO_URL', value: "${repo}")])                        
+                            }]}
+                        }
+                    }
+                }    
+            }                    
+                    def buildJobs = [] 
+                    repos.each {
+                        println "Building plugin : $it"
+                        def buildJob = {
+                            build(job: "media-plugin-placeholder-snapshot",
+                                            parameters:
+                                            [string(name: 'PLUGIN_REPO_URL', value: "$it")])                        
+                        }
+                        buildJobs.add(buildJob)
+                    } 
+                    parallel(buildJobs)
+*/
+  
+
+
