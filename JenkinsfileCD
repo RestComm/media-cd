@@ -8,7 +8,6 @@ pipeline {
     agent { node { label 'cxs-slave-master' } }
     parameters {
         string(name: 'MAJOR_VERSION_NUMBER', defaultValue:'8.0.0', description: 'Major version number of release')
-        booleanParam(name: 'PUBLISH_TO_CXS_NEXUS', defaultValue:true, description: 'Publish produced artifacts to local CXS Nexus repository.')
         booleanParam(name: 'PUBLISH_TO_SONATYPE', defaultValue:false, description: 'Publish produced artifacts to Maven Central repository')
     }
     stages {
@@ -18,7 +17,6 @@ pipeline {
                     def media_build_job = build(job: "media-parent",
                         parameters:
                         [string(name: 'MAJOR_VERSION_NUMBER', value: "${params.MAJOR_VERSION_NUMBER}"),
-                        booleanParam(name: 'PUBLISH_TO_CXS_NEXUS', value: "${params.PUBLISH_TO_CXS_NEXUS}"),
                         booleanParam(name: 'PUBLISH_TO_SONATYPE', value: "${params.PUBLISH_TO_SONATYPE}")])
                     def build_nbr = media_build_job.getNumber()    
                     println "build nbr:" + "${build_nbr}"
@@ -35,7 +33,6 @@ pipeline {
                         parameters:
                         [string(name: 'MAJOR_VERSION_NUMBER', value: "${params.MAJOR_VERSION_NUMBER}"),
                         booleanParam(name: 'UPDATE_PARENT', value: true),
-                        booleanParam(name: 'PUBLISH_TO_CXS_NEXUS', value: "${params.PUBLISH_TO_CXS_NEXUS}"),
                         booleanParam(name: 'PUBLISH_TO_SONATYPE', value: "${params.PUBLISH_TO_SONATYPE}")])
                     def build_nbr_core = media_build_job.getNumber()
                     println "build nbr:" + "${build_nbr_core}"
@@ -52,7 +49,6 @@ pipeline {
                         [string(name: 'MAJOR_VERSION_NUMBER', value: "${params.MAJOR_VERSION_NUMBER}"),
                         string(name: 'MEDIA_CORE_VERSION', value: "${build_ver_core}"),
                         booleanParam(name: 'UPDATE_PARENT', value: true),
-                        booleanParam(name: 'PUBLISH_TO_CXS_NEXUS', value: "${params.PUBLISH_TO_CXS_NEXUS}"),
                         booleanParam(name: 'PUBLISH_TO_SONATYPE', value: "${params.PUBLISH_TO_SONATYPE}")])
                     def build_nbr_vad = media_build_job.getNumber()    
                     println "build nbr:" + "${build_nbr_vad}"
@@ -70,7 +66,6 @@ pipeline {
                         string(name: 'MEDIA_BOM_VERSION', value: "${build_ver_bom}"),
                         string(name: 'BOM_REPLACER', value: "${build_ver_bom}"),
                         booleanParam(name: 'UPDATE_PARENT', value: true),
-                        booleanParam(name: 'PUBLISH_TO_CXS_NEXUS', value: "${params.PUBLISH_TO_CXS_NEXUS}"),
                         booleanParam(name: 'PUBLISH_TO_SONATYPE', value: "${params.PUBLISH_TO_SONATYPE}")])
                     def build_nbr_serv = media_build_job.getNumber()    
                     println "build nbr:" + "${build_nbr_serv}"
