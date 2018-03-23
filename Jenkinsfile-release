@@ -17,7 +17,7 @@ pipeline {
                     def media_build_job = build(job: "media-parent",
                         parameters:
                         [string(name: 'MAJOR_VERSION_NUMBER', value: "${params.MAJOR_VERSION_NUMBER}"),
-                        booleanParam(name: 'RELEASE', value: ${params.RELEASE})])
+                        booleanParam(name: 'RELEASE', value: params.RELEASE)])
                     def build_nbr = media_build_job.getNumber()    
                     println "build nbr:" + "${build_nbr}"
                     build_ver = "${MAJOR_VERSION_NUMBER}" + "-" + "${build_nbr}"
@@ -32,7 +32,7 @@ pipeline {
                     def media_build_job = build(job: "media-core",
                         parameters:
                         [string(name: 'MAJOR_VERSION_NUMBER', value: "${params.MAJOR_VERSION_NUMBER}"),
-                        booleanParam(name: 'RELEASE', value: ${params.RELEASE})])
+                        booleanParam(name: 'RELEASE', value: params.RELEASE)])
                     def build_nbr_core = media_build_job.getNumber()
                     println "build nbr:" + "${build_nbr_core}"
                     build_ver_core = "${MAJOR_VERSION_NUMBER}" + "-" + "${build_nbr_core}"
@@ -47,7 +47,7 @@ pipeline {
                         parameters:
                         [string(name: 'MAJOR_VERSION_NUMBER', value: "${params.MAJOR_VERSION_NUMBER}"),
                         string(name: 'MEDIA_CORE_VERSION', value: "${build_ver_core}"),
-                        booleanParam(name: 'RELEASE', value: ${params.RELEASE})])
+                        booleanParam(name: 'RELEASE', value: params.RELEASE)])
                     def build_nbr_vad = media_build_job.getNumber()    
                     println "build nbr:" + "${build_nbr_vad}"
                     build_ver_vad = "${MAJOR_VERSION_NUMBER}" + "-" + "${build_nbr_vad}"
@@ -63,7 +63,7 @@ pipeline {
                         [string(name: 'MAJOR_VERSION_NUMBER', value: "${params.MAJOR_VERSION_NUMBER}"),
                          string(name: 'MEDIA_CORE_VERSION', value: "${build_ver_core}"),
                          string(name: 'MEDIA_PLUGIN_VAD_VERSION', value: "${build_ver_vad}"),
-                         booleanParam(name: 'RELEASE', value: ${params.RELEASE})])
+                         booleanParam(name: 'RELEASE', value: params.RELEASE)])
                     def build_nbr_serv = media_build_job.getNumber()    
                     println "build nbr:" + "${build_nbr_serv}"
                     def build_ver_serv = "${MAJOR_VERSION_NUMBER}" + "-" + "${build_nbr_serv}"
